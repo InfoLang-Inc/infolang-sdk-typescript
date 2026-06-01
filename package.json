@@ -7,10 +7,10 @@
   "homepage": "https://infolang.ai",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/InfoLang-Inc/infolang-sdk-typescript.git"
+    "url": "git+https://github.com/InfoLang-Inc/__REPO__.git"
   },
   "bugs": {
-    "url": "https://github.com/InfoLang-Inc/infolang-sdk-typescript/issues"
+    "url": "https://github.com/InfoLang-Inc/__REPO__/issues"
   },
   "keywords": [
     "infolang",
@@ -44,7 +44,7 @@
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
-    "test": "vitest run",
+    "test": "vitest run --coverage",
     "test:watch": "vitest",
     "codegen": "bash scripts/codegen.sh"
   },
@@ -56,6 +56,7 @@
     "tsup": "^8.3.0",
     "typescript": "^5.6.0",
     "typescript-eslint": "^8.0.0",
+    "@vitest/coverage-v8": "^2.1.0",
     "vitest": "^2.1.0"
   }
 }
