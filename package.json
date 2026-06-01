@@ -1,0 +1,61 @@
+{
+  "name": "@infolang/sdk",
+  "version": "0.1.0",
+  "description": "Official TypeScript SDK for InfoLang semantic memory (il-runtime).",
+  "license": "Apache-2.0",
+  "author": "InfoLang <engineering@infolang.ai>",
+  "homepage": "https://infolang.ai",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/InfoLang-Inc/infolang-sdk-typescript.git"
+  },
+  "bugs": {
+    "url": "https://github.com/InfoLang-Inc/infolang-sdk-typescript/issues"
+  },
+  "keywords": [
+    "infolang",
+    "semantic-memory",
+    "rag",
+    "context",
+    "llm",
+    "sdk"
+  ],
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js",
+      "require": "./dist/index.cjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "codegen": "bash scripts/codegen.sh"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/node": "^22.0.0",
+    "eslint": "^9.0.0",
+    "openapi-typescript": "^7.4.0",
+    "tsup": "^8.3.0",
+    "typescript": "^5.6.0",
+    "typescript-eslint": "^8.0.0",
+    "vitest": "^2.1.0"
+  }
+}

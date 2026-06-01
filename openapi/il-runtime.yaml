@@ -1,0 +1,210 @@
+# Pinned copy of the il-runtime REST contract.
+#
+# Source of truth: infolang-runtime/openapi/il-runtime.yaml at the tag named in
+# IL_RUNTIME_VERSION. This copy is used for codegen and CI drift checks; do not
+# hand-edit beyond keeping it in sync with the runtime via scripts/codegen.sh.
+openapi: 3.1.0
+info:
+  title: InfoLang Runtime API
+  version: 0.1.0
+  description: Forge-compatible semantic memory REST API served by il-runtime.
+servers:
+  - url: https://api.infolang.ai/v1
+    description: Managed cloud edge
+  - url: http://127.0.0.1:8766
+    description: Self-hosted runtime
+paths:
+  /v1/recall:
+    post:
+      operationId: recall
+      summary: Semantic recall from a memory bank.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RecallRequest" }
+      responses:
+        "200":
+          description: Recalled chunks.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RecallResponse" }
+  /v1/remember:
+    post:
+      operationId: remember
+      summary: Store a memory in the caller namespace.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/RememberRequest" }
+      responses:
+        "200":
+          description: Stored.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/RememberResponse" }
+  /v1/forget:
+    post:
+      operationId: forget
+      summary: Delete a memory by id.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ForgetRequest" }
+      responses:
+        "200": { description: Deleted. }
+  /v1/banks:
+    get:
+      operationId: listBanks
+      summary: List available memory banks.
+      responses:
+        "200":
+          description: Banks.
+          content:
+            application/json:
+              schema:
+                type: array
+                items: { $ref: "#/components/schemas/Bank" }
+  /v1/recent:
+    get:
+      operationId: listRecent
+      summary: List recent memories in a namespace.
+      parameters:
+        - { name: namespace, in: query, schema: { type: string } }
+        - { name: n, in: query, schema: { type: integer } }
+      responses:
+        "200": { description: Recent memories. }
+  /v1/context-pack:
+    post:
+      operationId: contextPack
+      summary: Build a token-budgeted context string.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ContextPackRequest" }
+      responses:
+        "200":
+          description: Context pack.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ContextPackResponse" }
+  /v1/repos/{namespace}/ingest:
+    post:
+      operationId: ingestRepo
+      summary: Index a repository into a bank.
+      parameters:
+        - { name: namespace, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/IngestRequest" }
+      responses:
+        "200": { description: Ingest accepted. }
+  /v1/execute:
+    post:
+      operationId: execute
+      summary: Run a batch of operations.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: "#/components/schemas/ExecuteRequest" }
+      responses:
+        "200": { description: Batch results. }
+  /v1/health:
+    get:
+      operationId: health
+      summary: Liveness/readiness probe.
+      responses:
+        "200": { description: Healthy. }
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+  schemas:
+    Chunk:
+      type: object
+      properties:
+        i: { type: string, description: Memory id }
+        s: { type: number, description: Similarity score }
+        t: { type: string, description: Chunk text }
+        g: { type: string, description: Tags }
+      required: [i, t]
+    RecallRequest:
+      type: object
+      properties:
+        query: { type: string }
+        namespace: { type: string }
+        top_k: { type: integer }
+        filters: { type: object, additionalProperties: true }
+        verbose: { type: boolean }
+      required: [query]
+    RecallResponse:
+      type: object
+      properties:
+        namespace: { type: string }
+        chunks:
+          type: array
+          items: { $ref: "#/components/schemas/Chunk" }
+    RememberRequest:
+      type: object
+      properties:
+        text: { type: string }
+        namespace: { type: string }
+        source: { type: string }
+        tags: { type: string }
+      required: [text]
+    RememberResponse:
+      type: object
+      properties:
+        id: { type: string }
+        namespace: { type: string }
+    ForgetRequest:
+      type: object
+      properties:
+        memory_id: { type: string }
+        namespace: { type: string }
+      required: [memory_id]
+    Bank:
+      type: object
+      properties:
+        namespace: { type: string }
+        count: { type: integer }
+      required: [namespace]
+    ContextPackRequest:
+      type: object
+      properties:
+        query: { type: string }
+        namespace: { type: string }
+        max_tokens: { type: integer }
+        repo_root: { type: string }
+      required: [query, namespace]
+    ContextPackResponse:
+      type: object
+      properties:
+        pack: { type: string }
+        tokens_estimated: { type: integer }
+        namespace: { type: string }
+    IngestRequest:
+      type: object
+      properties:
+        repo_root: { type: string }
+        ref: { type: string }
+      required: [repo_root]
+    ExecuteRequest:
+      type: object
+      properties:
+        operations:
+          type: array
+          items:
+            type: object
+            properties:
+              op: { type: string }
+              args: { type: object, additionalProperties: true }
+            required: [op]
+      required: [operations]
