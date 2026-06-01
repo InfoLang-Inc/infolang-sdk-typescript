@@ -9,7 +9,7 @@ info:
   version: 0.1.0
   description: Forge-compatible semantic memory REST API served by il-runtime.
 servers:
-  - url: https://api.infolang.ai/v1
+  - url: https://api.infolang.ai
     description: Managed cloud edge
   - url: http://127.0.0.1:8766
     description: Self-hosted runtime

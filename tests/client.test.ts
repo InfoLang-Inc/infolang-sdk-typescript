@@ -2,7 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import { InfoLang, NotFoundError, RateLimitError } from "../src/index.js";
 
-const BASE_URL = "https://api.test.infolang.ai/v1";
+const BASE_URL = "https://api.test.infolang.ai";
 
 /** Build a fetch stub that records requests and returns canned responses. */
 function stubFetch(handler: (url: string, init: RequestInit) => Response): {

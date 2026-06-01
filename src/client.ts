@@ -30,7 +30,7 @@ import type {
 } from "./types.js";
 import { version } from "./version.js";
 
-export const CLOUD_BASE_URL = "https://api.infolang.ai/v1";
+export const CLOUD_BASE_URL = "https://api.infolang.ai";
 export const DIRECT_BASE_URL = "http://127.0.0.1:8766";
 
 export interface InfoLangOptions {
