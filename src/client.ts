@@ -42,6 +42,12 @@ export interface InfoLangOptions {
   auth?: AuthProvider;
   baseUrl?: string;
   namespace?: string;
+  /**
+   * Account workspace to target. Sent as `X-InfoLang-Workspace-Id`.
+   * Must be in the API key's allowlist (or a membership for JWT auth).
+   * Also reads `INFOLANG_WORKSPACE` / `INFOLANG_WORKSPACE_ID`.
+   */
+  workspace?: string;
   timeoutMs?: number;
   maxRetries?: number;
   /** Custom fetch (for Workers, mocks, or a TLS-configured agent). */
@@ -75,8 +81,17 @@ function resolveNamespace(options: InfoLangOptions, auth: AuthProvider): string 
   return globalThis.process?.env?.INFOLANG_NAMESPACE;
 }
 
+function resolveWorkspace(options: InfoLangOptions): string | undefined {
+  if (options.workspace) return options.workspace;
+  return (
+    globalThis.process?.env?.INFOLANG_WORKSPACE ??
+    globalThis.process?.env?.INFOLANG_WORKSPACE_ID
+  );
+}
+
 export class InfoLang {
   readonly namespace?: string;
+  readonly workspace?: string;
   readonly baseUrl: string;
   readonly memory: MemoryResource;
   readonly context: ContextResource;
@@ -86,6 +101,7 @@ export class InfoLang {
     const auth = resolveAuth(options);
     this.baseUrl = resolveBaseUrl(options, auth);
     this.namespace = resolveNamespace(options, auth);
+    this.workspace = resolveWorkspace(options);
     const transport = new Transport({
       baseUrl: this.baseUrl,
       auth,
@@ -93,6 +109,7 @@ export class InfoLang {
       timeoutMs: options.timeoutMs,
       maxRetries: options.maxRetries,
       userAgent: `infolang-typescript/${version}`,
+      workspaceId: this.workspace,
     });
     this.memory = new MemoryResource(transport, this.namespace);
     this.context = new ContextResource(transport, this.namespace);

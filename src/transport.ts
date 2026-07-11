@@ -24,6 +24,8 @@ export interface TransportOptions {
   backoffBaseMs?: number;
   backoffCapMs?: number;
   userAgent: string;
+  /** When set, sent as X-InfoLang-Workspace-Id on every request. */
+  workspaceId?: string;
 }
 
 export interface RequestOptions {
@@ -71,6 +73,7 @@ export class Transport {
   private readonly backoffBaseMs: number;
   private readonly backoffCapMs: number;
   private readonly userAgent: string;
+  private readonly workspaceId?: string;
 
   constructor(options: TransportOptions) {
     this.baseUrl = options.baseUrl.replace(/\/$/, "");
@@ -81,6 +84,7 @@ export class Transport {
     this.backoffBaseMs = options.backoffBaseMs ?? 500;
     this.backoffCapMs = options.backoffCapMs ?? 8_000;
     this.userAgent = options.userAgent;
+    this.workspaceId = options.workspaceId;
     if (!this.fetchImpl) {
       throw new InfoLangConnectionError(
         "global fetch is unavailable; pass a fetch implementation via the client options",
@@ -107,6 +111,9 @@ export class Transport {
         ...(await this.auth.headers()),
         ...options.headers,
       };
+      if (this.workspaceId) {
+        headers["X-InfoLang-Workspace-Id"] = this.workspaceId;
+      }
       if (options.body !== undefined) headers["Content-Type"] = "application/json";
 
       let response: Response;

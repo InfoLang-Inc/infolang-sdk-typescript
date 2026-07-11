@@ -8,6 +8,8 @@ info:
   title: InfoLang Runtime API
   version: 0.1.0
   description: Forge-compatible semantic memory REST API served by il-runtime.
+  # Multi-workspace accounts: optional X-InfoLang-Workspace-Id selects the
+  # tenant when the API key allowlist (or JWT membership) covers more than one.
 servers:
   - url: https://api.infolang.ai
     description: Managed cloud edge
@@ -18,6 +20,8 @@ paths:
     post:
       operationId: recall
       summary: Semantic recall from a memory bank.
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceIdHeader"
       requestBody:
         required: true
         content:
@@ -33,6 +37,8 @@ paths:
     post:
       operationId: remember
       summary: Store a memory in the caller namespace.
+      parameters:
+        - $ref: "#/components/parameters/WorkspaceIdHeader"
       requestBody:
         required: true
         content:
@@ -122,6 +128,19 @@ paths:
       responses:
         "200": { description: Healthy. }
 components:
+  parameters:
+    WorkspaceIdHeader:
+      name: X-InfoLang-Workspace-Id
+      in: header
+      required: false
+      description: >
+        Select which account workspace this request targets. Required when an
+        API key's allowlist covers more than one workspace (or when using a
+        JWT and the user belongs to multiple workspaces). Must be a workspace
+        the caller is allowed to access.
+      schema:
+        type: string
+        format: uuid
   securitySchemes:
     bearerAuth:
       type: http
