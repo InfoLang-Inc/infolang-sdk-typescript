@@ -2,7 +2,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import { ApiKeyAuth } from "../src/auth.js";
 import { InfoLangConnectionError } from "../src/errors.js";
-import { parseBanks, parseRecall } from "../src/resources/ops.js";
+import { parseBanks, parseRecall, filterHitsByTags, parseExecuteRememberBatch, buildListRecent, buildForget } from "../src/resources/ops.js";
+import type { Chunk } from "../src/types.js";
 import { Transport } from "../src/transport.js";
 
 const BASE = "https://api.test.infolang.ai";
@@ -152,5 +153,58 @@ describe("ops parsers", () => {
     const result = parseRecall(null, {});
     expect(result.chunks).toEqual([]);
     expect(result.weak).toBe(false);
+  });
+
+  it("parseRecall maps runtime hits to chunks", () => {
+    const result = parseRecall(
+      {
+        hits: [{ id: "h1", text: "hello", tags: "a", similarity: 0.91 }],
+        namespace: "default",
+      },
+      {},
+    );
+    expect(result.chunks).toEqual([
+      { id: "h1", text: "hello", tags: "a", score: 0.91 },
+    ]);
+    expect(result.namespace).toBe("default");
+    expect(result.weak).toBe(false);
+  });
+
+  it("parseRecall accepts bare chunk arrays", () => {
+    const result = parseRecall([{ i: "x", t: "y", s: 0.2 }], {});
+    expect(result.chunks[0]?.id).toBe("x");
+    expect(result.weak).toBe(true);
+  });
+
+  it("parseBanks maps total_memories to count", () => {
+    expect(parseBanks({ banks: [{ namespace: "ns", total_memories: 4 }] })).toEqual([
+      { namespace: "ns", count: 4 },
+    ]);
+    expect(parseBanks({ banks: "nope" })).toEqual([]);
+  });
+
+  it("filterHitsByTags truncates without tag filter", () => {
+    const chunks: Chunk[] = [
+      { id: "a", text: "a", tags: "x" },
+      { id: "b", text: "b" },
+    ];
+    expect(filterHitsByTags(chunks, undefined, 1).map((c) => c.id)).toEqual(["a"]);
+    expect(filterHitsByTags(chunks, [], undefined)).toHaveLength(2);
+  });
+
+  it("buildForget and buildListRecent use real runtime paths", () => {
+    expect(buildForget("id/with space")).toEqual({
+      method: "DELETE",
+      path: "/v1/memories/id%2Fwith%20space",
+    });
+    expect(buildListRecent({ namespace: "ns", n: 2 }).path).toBe(
+      "/v1/memories?namespace=ns&limit=2",
+    );
+    expect(buildListRecent({}).path).toBe("/v1/memories");
+  });
+
+  it("parseExecuteRememberBatch handles empty and legacy shapes", () => {
+    expect(parseExecuteRememberBatch("nope")).toEqual([]);
+    expect(parseExecuteRememberBatch({ results: [{ payload: null }] })[0]?.memoryId).toBeUndefined();
   });
 });

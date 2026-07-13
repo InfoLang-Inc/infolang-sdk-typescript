@@ -73,6 +73,70 @@ export class MemoryResource {
     const record = data as Record<string, unknown>;
     return Array.isArray(record?.memories) ? (record.memories as unknown[]) : [];
   }
+
+  /** Recall with tag-inclusion ordering over a candidate pool (client-side). */
+  async recallHybrid(
+    query: string,
+    options: {
+      namespace?: string;
+      topK?: number;
+      tagFilter?: string[];
+      candidatePool?: number;
+      useHybrid?: boolean;
+    } = {},
+  ): Promise<RecallResult> {
+    void options.useHybrid;
+    const ns = options.namespace ?? this.defaultNamespace;
+    const topK = options.topK ?? 10;
+    const pool = Math.max(options.candidatePool ?? 0, topK) || topK;
+    const result = await this.recall(query, { namespace: ns, topK: pool });
+    result.chunks = ops.filterHitsByTags(result.chunks, options.tagFilter, topK);
+    return result;
+  }
+
+  /** Store many memories via POST /v1/execute remember_batch. */
+  async rememberBatch(
+    items: Array<string | { text: string; tags?: string | string[]; source?: string }>,
+    options: { namespace?: string; source?: string } = {},
+  ): Promise<RememberResult[]> {
+    if (!items.length) return [];
+    const records = ops.normalizeRememberItems(items, options.source);
+    const { data } = await this.transport.request<unknown>(
+      ops.buildRememberBatch(records, {
+        namespace: options.namespace ?? this.defaultNamespace,
+        source: options.source,
+      }),
+    );
+    return ops.parseExecuteRememberBatch(data);
+  }
+
+  /** Best-effort bulk clear (list + forget loop). */
+  async resetNamespace(namespace?: string, options: { batch?: number } = {}): Promise<number> {
+    const ns = namespace ?? this.defaultNamespace;
+    const batch = options.batch ?? 500;
+    let deleted = 0;
+    while (true) {
+      const recent = await this.listRecent({ namespace: ns, n: batch });
+      const ids = recent
+        .map((r) => {
+          if (!r || typeof r !== "object") return null;
+          const row = r as Record<string, unknown>;
+          for (const key of ["id", "memory_id", "i"] as const) {
+            const v = row[key];
+            if (typeof v === "string" && v) return v;
+          }
+          return null;
+        })
+        .filter((id): id is string => Boolean(id));
+      if (!ids.length) break;
+      for (const id of ids) {
+        await this.forget(id, { namespace: ns });
+        deleted += 1;
+      }
+      if (ids.length < batch) break;
+    }
+    return deleted;
+  }
 }
 
 // Re-export to keep the public option type importable from this module too.

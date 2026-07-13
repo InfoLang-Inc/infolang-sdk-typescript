@@ -217,14 +217,90 @@ describe("InfoLang client", () => {
     expect(await il.listRecent()).toEqual([{ id: "m2" }]);
   });
 
-  it("forget sends namespace in body", async () => {
+  it("forget uses DELETE /v1/memories/{id}", async () => {
     const { fetch, calls } = stubFetch(() => jsonResponse(200, {}));
     const il = InfoLang.fromApiKey("il_live_test", { baseUrl: BASE_URL, namespace: "ns1", fetch });
     await il.forget("mem_x");
-    const body = JSON.parse((calls[0]?.init.body as string) ?? "{}");
-    expect(body.namespace).toBe("ns1");
-    expect(body.memory_id).toBe("mem_x");
+    expect(calls[0]?.url).toBe(`${BASE_URL}/v1/memories/mem_x`);
+    expect(calls[0]?.init.method).toBe("DELETE");
   });
+
+  it("recallHybrid overfetches then applies tag ordering", async () => {
+    const { fetch, calls } = stubFetch(() =>
+      jsonResponse(200, {
+        hits: [
+          { id: "a", text: "untagged", similarity: 0.99, tags: "bob" },
+          { id: "b", text: "tagged", similarity: 0.5, tags: "alice,march" },
+        ],
+      }),
+    );
+    const il = InfoLang.fromApiKey("il_live_test", { baseUrl: BASE_URL, fetch });
+    const result = await il.recallHybrid("q", { topK: 1, tagFilter: ["march"], candidatePool: 10 });
+    expect(calls[0]?.url).toBe(`${BASE_URL}/v1/recall`);
+    expect(result.chunks).toHaveLength(1);
+    expect(result.chunks[0]?.id).toBe("b");
+  });
+
+  it("rememberBatch posts execute remember_batch", async () => {
+    const { fetch, calls } = stubFetch(() =>
+      jsonResponse(200, {
+        results: [
+          {
+            op: "remember_batch",
+            ok: true,
+            payload: { results: [{ id: "1" }, { id: "2" }] },
+          },
+        ],
+      }),
+    );
+    const il = InfoLang.fromApiKey("il_live_test", { baseUrl: BASE_URL, namespace: "ns", fetch });
+    const out = await il.rememberBatch(["one", { text: "two", tags: ["t"] }]);
+    expect(calls[0]?.url).toBe(`${BASE_URL}/v1/execute`);
+    const body = JSON.parse((calls[0]?.init.body as string) ?? "{}");
+    expect(body.operations[0].op).toBe("remember_batch");
+    expect(out.map((r) => r.memoryId)).toEqual(["1", "2"]);
+    expect(await il.rememberBatch([])).toEqual([]);
+  });
+
+  it("resetNamespace lists then forgets", async () => {
+    let round = 0;
+    const { fetch, calls } = stubFetch((url, init) => {
+      if ((init.method ?? "GET") === "GET") {
+        round += 1;
+        if (round === 1) {
+          return jsonResponse(200, {
+            memories: [{ id: "a" }, { memory_id: "b" }, { i: "c" }, "skip", {}],
+          });
+        }
+        return jsonResponse(200, { memories: [] });
+      }
+      return jsonResponse(200, {});
+    });
+    const il = InfoLang.fromApiKey("il_live_test", { baseUrl: BASE_URL, namespace: "ns", fetch });
+    const deleted = await il.resetNamespace("ns", { batch: 500 });
+    expect(deleted).toBe(3);
+    expect(calls.some((c) => c.init.method === "DELETE")).toBe(true);
+  });
+
+  it("rememberBatch parses legacy per-op execute payloads", async () => {
+    const { fetch } = stubFetch(() =>
+      jsonResponse(200, {
+        results: [
+          { op: "remember", ok: true, payload: { id: "solo" } },
+        ],
+      }),
+    );
+    const il = InfoLang.fromApiKey("il_live_test", { baseUrl: BASE_URL, fetch });
+    const out = await il.rememberBatch(["x"]);
+    expect(out[0]?.memoryId).toBe("solo");
+  });
+
+  it("rememberBatch rejects invalid items", async () => {
+    const { fetch } = stubFetch(() => jsonResponse(200, { results: [] }));
+    const il = InfoLang.fromApiKey("il_live_test", { baseUrl: BASE_URL, fetch });
+    await expect(il.rememberBatch([123 as unknown as string])).rejects.toBeInstanceOf(TypeError);
+  });
+
 
   it("health wraps non-object body", async () => {
     const { fetch } = stubFetch(() => new Response("ok", { status: 200 }));
