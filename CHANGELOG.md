@@ -5,6 +5,18 @@ project adheres to [Semantic Versioning](https://semver.org). The SDK minor
 version tracks the `il-runtime` API version pinned in
 `openapi/IL_RUNTIME_VERSION`.
 
+## [0.2.0] - 2026-07-13
+
+### Changed
+- Pinned OpenAPI contract to **v0.2.0** (runtime-aligned).
+- `forget(memoryId)` now calls `DELETE /v1/memories/{id}` (was `POST /v1/forget`).
+- `listRecent({ n })` now calls `GET /v1/memories?limit=` (was `GET /v1/recent`).
+
+### Added
+- `parseRecall` maps runtime `hits` → `chunks` (fixes empty recall results).
+- Parity with Python: `recallHybrid`, `rememberBatch`, `resetNamespace`.
+- npm publish workflow with provenance.
+
 ## [0.1.0] - Unreleased
 
 ### Added

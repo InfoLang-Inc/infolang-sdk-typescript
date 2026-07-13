@@ -160,6 +160,30 @@ export class InfoLang {
     return this.memory.listRecent(options);
   }
 
+  recallHybrid(
+    query: string,
+    options?: {
+      namespace?: string;
+      topK?: number;
+      tagFilter?: string[];
+      candidatePool?: number;
+      useHybrid?: boolean;
+    },
+  ): Promise<RecallResult> {
+    return this.memory.recallHybrid(query, options);
+  }
+
+  rememberBatch(
+    items: Array<string | { text: string; tags?: string | string[]; source?: string }>,
+    options?: { namespace?: string; source?: string },
+  ): Promise<RememberResult[]> {
+    return this.memory.rememberBatch(items, options);
+  }
+
+  resetNamespace(namespace?: string, options?: { batch?: number }): Promise<number> {
+    return this.memory.resetNamespace(namespace, options);
+  }
+
   contextPack(query: string, options?: ContextPackOptions): Promise<ContextPack> {
     return this.context.contextPack(query, options);
   }

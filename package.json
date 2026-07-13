@@ -1,16 +1,16 @@
 {
   "name": "@infolang/sdk",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Official TypeScript SDK for InfoLang semantic memory (il-runtime).",
   "license": "Apache-2.0",
   "author": "InfoLang <engineering@infolang.ai>",
   "homepage": "https://infolang.ai",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/InfoLang-Inc/__REPO__.git"
+    "url": "git+https://github.com/InfoLang-Inc/infolang-sdk-typescript.git"
   },
   "bugs": {
-    "url": "https://github.com/InfoLang-Inc/__REPO__/issues"
+    "url": "https://github.com/InfoLang-Inc/infolang-sdk-typescript/issues"
   },
   "keywords": [
     "infolang",
