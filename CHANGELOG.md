@@ -7,6 +7,8 @@ version tracks the `il-runtime` API version pinned in
 
 ## [Unreleased]
 
+## [0.2.1] - 2026-07-13
+
 ### Fixed
 - `Transport` no longer detaches `globalThis.fetch` from its receiver
   (`fetch?.bind(globalThis)`), which threw `Illegal invocation` in
