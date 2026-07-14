@@ -5,6 +5,15 @@ project adheres to [Semantic Versioning](https://semver.org). The SDK minor
 version tracks the `il-runtime` API version pinned in
 `openapi/IL_RUNTIME_VERSION`.
 
+## [Unreleased]
+
+### Fixed
+- `Transport` no longer detaches `globalThis.fetch` from its receiver
+  (`fetch?.bind(globalThis)`), which threw `Illegal invocation` in
+  Cloudflare Workers (workerd) and any runtime that brand-checks `fetch`.
+  Found and fixed during edge-runtime verification — see
+  `docs/EDGE_COMPAT.md`.
+
 ## [0.2.0] - 2026-07-13
 
 ### Changed

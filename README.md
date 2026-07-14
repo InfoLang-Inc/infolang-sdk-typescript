@@ -1,21 +1,14 @@
 # InfoLang TypeScript SDK
 
-Official TypeScript client for [InfoLang](https://infolang.ai) semantic memory.
-Wraps the `il-runtime` REST API (Forge-compatible) with one-line construction,
-typed errors, automatic retries, and ergonomic agent helpers. `fetch`-native —
-runs on Node 18+, Bun, Deno, Cloudflare Workers, and browsers.
-
-> Repository: `infolang-sdk-typescript`. Package: `@infolang/sdk` (npm).
+Official TypeScript client for [InfoLang](https://infolang.ai) semantic
+memory. Wraps the `il-runtime` REST API with one-line construction, typed
+errors, and automatic retries. `fetch`-native, zero runtime dependencies —
+targets Node 18+ and Cloudflare Workers (with the `nodejs_compat`
+compatibility flag; see [`docs/EDGE_COMPAT.md`](docs/EDGE_COMPAT.md) for the
+verified state and known gaps). Bun, Deno, and browser bundling are untested.
+Package: `@infolang/sdk` (npm).
 
 ## Install
-
-While the package is private, install from the repo:
-
-```bash
-npm install github:InfoLang-Inc/infolang-sdk-typescript#v0.1.0
-```
-
-Once published:
 
 ```bash
 npm install @infolang/sdk
@@ -68,10 +61,13 @@ directly.
 | Method | Purpose |
 |--------|---------|
 | `recall(query, { namespace, topK, filters, verbose })` | Semantic recall |
+| `recallHybrid(query, { namespace, topK, tagFilter, candidatePool })` | Recall over a candidate pool with tag-inclusion ordering |
 | `investigate(query, { namespaceHint, topK = 5 })` | Agent-style recall |
 | `remember(text, { source, tags, namespace })` | Store a memory |
+| `rememberBatch(items, { namespace, source })` | Store many memories in one call |
 | `memorize(content, { source, tags, namespace })` | Alias of `remember` |
 | `forget(memoryId, { namespace })` | Delete a memory |
+| `resetNamespace(namespace)` | Bulk clear a namespace (list + forget) |
 | `listBanks()` / `listRecent({ namespace, n })` | Introspection |
 | `contextPack(query, { namespace, maxTokens, repoRoot })` | One-shot context string |
 | `ingestRepo(namespace, { repoRoot, ref })` | Index a repository |
@@ -88,8 +84,8 @@ error carries `status`, `body`, and `requestId`.
 ## Resilience
 
 `recall`/`remember` and friends retry `429` and `5xx` with exponential backoff
-plus full jitter (configurable via `maxRetries`), honor `Retry-After`, and abort
-on the timeout budget (default 30s, set via `timeoutMs`).
+plus full jitter (configurable via `maxRetries`), honor `Retry-After`, and
+abort on the timeout budget (default 30s, set via `timeoutMs`).
 
 ## Development
 
@@ -103,3 +99,7 @@ npm run build
 
 The REST contract is pinned in `openapi/` (see `openapi/IL_RUNTIME_VERSION`).
 Regenerate types with `npm run codegen` after bumping the pin.
+
+## License
+
+Apache-2.0

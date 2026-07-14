@@ -13,9 +13,9 @@ REST API. Package name: `@infolang/sdk`. fetch-native, no runtime deps.
 
 ## Contract
 
-The REST contract is the source of truth in `infolang-runtime`
-(`openapi/il-runtime.yaml`). This repo pins a copy under `openapi/`; the pinned
-version is in `openapi/IL_RUNTIME_VERSION`. Run `npm run codegen` after a bump.
+The REST contract lives upstream; this repo pins a copy under `openapi/`
+(`openapi/il-runtime.yaml`). The pinned version is in
+`openapi/IL_RUNTIME_VERSION`. Run `npm run codegen` after a bump.
 
 ## Rules
 

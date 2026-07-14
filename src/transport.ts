@@ -78,7 +78,10 @@ export class Transport {
   constructor(options: TransportOptions) {
     this.baseUrl = options.baseUrl.replace(/\/$/, "");
     this.auth = options.auth;
-    this.fetchImpl = options.fetch ?? globalThis.fetch;
+    // Workers/workerd (and some other runtimes) brand-check `fetch`'s
+    // receiver; a detached reference throws "Illegal invocation" unless
+    // it's rebound to globalThis.
+    this.fetchImpl = options.fetch ?? globalThis.fetch?.bind(globalThis);
     this.timeoutMs = options.timeoutMs ?? 30_000;
     this.maxRetries = options.maxRetries ?? 2;
     this.backoffBaseMs = options.backoffBaseMs ?? 500;
